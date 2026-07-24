@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@core/supabase/client';
+import { useOnboardingCompleteStore } from '@stores/onboardingCompleteStore';
 
 interface AuthState {
   session: Session | null;
@@ -47,6 +48,10 @@ export const useAuthStore = create<AuthState>((set) => {
     signUp: async (email, password) => {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) return { error: error.message, needsEmailConfirmation: false };
+      // A brand-new account hasn't onboarded, regardless of whatever a
+      // previous account on this device left behind — the completion flag
+      // is device-local, not account-scoped (see onboardingCompleteStore).
+      useOnboardingCompleteStore.setState({ completed: false });
       return { error: null, needsEmailConfirmation: !data.session };
     },
     signOut: async () => {

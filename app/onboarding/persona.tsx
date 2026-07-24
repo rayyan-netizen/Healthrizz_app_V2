@@ -7,6 +7,7 @@ import { BrandCard } from '@components/brand/BrandCard';
 import { BrandButton } from '@components/brand/BrandButton';
 import { Mascot } from '@components/brand/Mascot';
 import { useOnboardingStore } from '@stores/onboardingStore';
+import { useOnboardingCompleteStore } from '@stores/onboardingCompleteStore';
 import { calculatePersonaScores, suggestGoals } from '@core/personas/persona-matching';
 import { PERSONA_DISPLAY } from '@core/types/persona';
 import { ASSETS } from '@lib/assets';
@@ -22,6 +23,8 @@ export default function PersonaResult() {
   const router = useRouter();
   const responses = useOnboardingStore((s) => s.responses);
   const setGoals = useOnboardingStore((s) => s.setGoals);
+  const resetOnboarding = useOnboardingStore((s) => s.reset);
+  const markOnboardingComplete = useOnboardingCompleteStore((s) => s.markComplete);
 
   const matches = useMemo(() => calculatePersonaScores(responses), [responses]);
   const primary = matches[0];
@@ -41,8 +44,12 @@ export default function PersonaResult() {
   );
 
   const onContinue = () => {
+    // Goal-picking + backend profile creation (old goals.tsx) is deferred
+    // until Supabase is wired back in — for now, onboarding ends here.
     setGoals(goals.map((g) => g.goal_type));
-    router.push('/onboarding/goals');
+    markOnboardingComplete();
+    resetOnboarding();
+    router.dismissTo('/');
   };
 
   if (!primary || !display) {
