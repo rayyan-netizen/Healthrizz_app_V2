@@ -8,9 +8,12 @@ import { BrandButton } from '@components/brand/BrandButton';
 import { Mascot } from '@components/brand/Mascot';
 import { useOnboardingStore } from '@stores/onboardingStore';
 import { useOnboardingCompleteStore } from '@stores/onboardingCompleteStore';
+import { useAuthStore } from '@stores/authStore';
+import { useChildStore } from '@stores/childStore';
 import { calculatePersonaScores, suggestGoals } from '@core/personas/persona-matching';
 import { PERSONA_DISPLAY } from '@core/types/persona';
 import { ASSETS } from '@lib/assets';
+import { supabase } from '@core/supabase/client';
 import {
   PRIMARY,
   SECONDARY,
@@ -22,9 +25,12 @@ import {
 export default function PersonaResult() {
   const router = useRouter();
   const responses = useOnboardingStore((s) => s.responses);
+  const nickname = useOnboardingStore((s) => s.nickname);
   const setGoals = useOnboardingStore((s) => s.setGoals);
   const resetOnboarding = useOnboardingStore((s) => s.reset);
   const markOnboardingComplete = useOnboardingCompleteStore((s) => s.markComplete);
+  const session = useAuthStore((s) => s.session);
+  const setChildId = useChildStore((s) => s.setChildId);
 
   const matches = useMemo(() => calculatePersonaScores(responses), [responses]);
   const primary = matches[0];
@@ -43,10 +49,31 @@ export default function PersonaResult() {
     [primary, matches]
   );
 
-  const onContinue = () => {
-    // Goal-picking + backend profile creation (old goals.tsx) is deferred
-    // until Supabase is wired back in — for now, onboarding ends here.
+  const onContinue = async () => {
     setGoals(goals.map((g) => g.goal_type));
+
+    // Create the Supabase `children` row now, before resetOnboarding() wipes
+    // the nickname/persona data below. child_map_progress (lesson/quiz
+    // completion) is keyed to this row's id via childStore.
+    if (session && primary) {
+      const { data, error } = await supabase
+        .from('children')
+        .insert({
+          parent_id: session.user.id,
+          nickname: nickname || 'Explorer',
+          primary_persona: primary.persona_id,
+          secondary_persona: matches[1]?.persona_id ?? null,
+          active_goals: goals.map((g) => g.goal_type),
+        })
+        .select('id')
+        .single();
+      if (error) {
+        console.warn('Failed to create child profile:', error.message);
+      } else if (data) {
+        setChildId(data.id);
+      }
+    }
+
     markOnboardingComplete();
     resetOnboarding();
     router.dismissTo('/');

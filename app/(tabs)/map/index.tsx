@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -97,6 +98,7 @@ function IslandMarker({ icon, title, subtext, color, positionPct, isCurrent, onP
 }
 
 export default function OverworldMap() {
+  const router = useRouter();
   const [container, setContainer] = useState({ width: SCREEN.width, height: SCREEN.height });
 
   // Map fills the container height at min zoom; width follows the image's
@@ -199,9 +201,13 @@ export default function OverworldMap() {
                   color={s.color}
                   positionPct={s.position}
                   isCurrent={currentTopicKey === s.topicKey}
-                  onPress={() =>
-                    Alert.alert(`${s.icon} ${s.sessionTitle}`, `${s.subtext}\n\nLessons coming soon!`)
-                  }
+                  onPress={() => {
+                    if (s.topicKey === 'water') {
+                      router.push(`/map/${s.topicKey}`);
+                    } else {
+                      Alert.alert(`${s.icon} ${s.sessionTitle}`, `${s.subtext}\n\nLessons coming soon!`);
+                    }
+                  }}
                 />
               ))}
             </Animated.View>
