@@ -1,11 +1,6 @@
 /**
  * Local asset registry — bundled images.
  * Centralizes `require()` paths so screens just import a key.
- *
- * Trimmed from HealthRizz-Mobile's lib/assets.ts: this only carries what
- * onboarding needs (brand mascots + companions). The original also had a
- * `map` section (overworld/submap backgrounds) tied to the map feature,
- * which isn't ported to this app yet.
  */
 
 export const ASSETS = {
@@ -21,5 +16,8 @@ export const ASSETS = {
       apple: require('@assets/brand/mascots/companion-apple.jpg'),
       banana: require('@assets/brand/mascots/companion-banana.jpg'),
     },
+  },
+  map: {
+    overworld: require('@assets/map/backgrounds/nutrition-island-map.png'),
   },
 } as const;
