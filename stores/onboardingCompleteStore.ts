@@ -1,10 +1,9 @@
 /**
  * Tracks whether onboarding has been completed on this device.
- * Stand-in for a real "does this user have a child profile" backend check —
- * Supabase is intentionally not wired into onboarding yet, so this is
- * device-local only. A fresh install (or app reinstall) will show
- * onboarding again even for a returning account; that's a known gap to
- * close once onboarding writes to the backend.
+ * Device-local by itself, but authStore's syncChildId() re-derives it from
+ * Supabase on every sign-in — if the signed-in account already has a
+ * `children` row, this gets flipped back to true even on a fresh install,
+ * so onboarding isn't repeated for a returning account.
  */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';

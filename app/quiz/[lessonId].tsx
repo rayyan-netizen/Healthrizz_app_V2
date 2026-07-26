@@ -40,7 +40,7 @@ export default function QuizScreen() {
   const onComplete = useCallback(
     async (r: { stars: number; passed: boolean; correctCount: number; total: number }) => {
       if (childId && topicKey && r.passed) {
-        await completeNode(childId, `${topicKey}-quiz`, r.stars, r.stars * 10);
+        await completeNode(childId, `${topicKey}-quiz`, r.stars);
       }
       goBack();
     },

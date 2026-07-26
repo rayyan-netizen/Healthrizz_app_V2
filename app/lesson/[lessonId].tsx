@@ -39,7 +39,7 @@ export default function LessonScreen() {
 
   const onComplete = useCallback(async () => {
     if (childId && lessonId) {
-      await completeNode(childId, lessonId, 3, 10);
+      await completeNode(childId, lessonId, 3);
     }
     goBack();
   }, [childId, lessonId, goBack]);
