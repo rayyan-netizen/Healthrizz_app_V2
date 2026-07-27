@@ -26,6 +26,7 @@ import { supabase } from '@core/supabase/client';
 const REAL_NODE_ID: Record<string, string> = {
   'water-lesson': 'node-d142f583-f6e8-475e-b19f-680c336f5d1c',
   'water-quiz': 'node-d142f583-f6e8-475e-b19f-680c336f5d1c-quiz',
+  'water-game': 'node-d142f583-f6e8-475e-b19f-680c336f5d1c-game',
 };
 
 function resolveNodeId(fixtureNodeId: string): string {

@@ -61,11 +61,12 @@ export default function SubMap() {
   const session = CANONICAL_SESSIONS.find((s) => s.topicKey === topicKey);
   const lessonNodeId = `${topicKey}-lesson`;
   const quizNodeId = `${topicKey}-quiz`;
+  const gameNodeId = `${topicKey}-game`;
 
   useFocusEffect(
     useCallback(() => {
       if (!childId || topicKey !== 'water') return;
-      void fetchNodeCompletion(childId, [lessonNodeId, quizNodeId]).then(setCompletedNodeIds);
+      void fetchNodeCompletion(childId, [lessonNodeId, quizNodeId, gameNodeId]).then(setCompletedNodeIds);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [childId, topicKey])
   );
@@ -82,6 +83,7 @@ export default function SubMap() {
   }
 
   const lessonDone = completedNodeIds.has(lessonNodeId);
+  const quizDone = completedNodeIds.has(quizNodeId);
   const positions = SUBMAP_NODE_POSITIONS[session.topicKey] ?? [
     { x: 25, y: 60 },
     { x: 50, y: 30 },
@@ -112,7 +114,7 @@ export default function SubMap() {
           <NodeMarker
             icon="📝"
             title="Practice"
-            state={!lessonDone ? 'locked' : completedNodeIds.has(quizNodeId) ? 'completed' : 'available'}
+            state={!lessonDone ? 'locked' : quizDone ? 'completed' : 'available'}
             positionPct={positions[1]}
             onPress={() => {
               if (!lessonDone) {
@@ -125,9 +127,15 @@ export default function SubMap() {
           <NodeMarker
             icon="🎮"
             title="Play"
-            state="locked"
+            state={!quizDone ? 'locked' : completedNodeIds.has(gameNodeId) ? 'completed' : 'available'}
             positionPct={positions[2]}
-            onPress={() => Alert.alert('🎮 Play', 'Mini-games coming soon!')}
+            onPress={() => {
+              if (!quizDone) {
+                Alert.alert('Finish Practice first!', 'Pass the quiz before you unlock the game.');
+                return;
+              }
+              router.push({ pathname: '/game/[gameType]', params: { gameType: 'quiz-battle', topicKey } });
+            }}
           />
         </ImageBackground>
       </SafeAreaView>
