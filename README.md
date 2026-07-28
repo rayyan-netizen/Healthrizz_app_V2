@@ -6,6 +6,13 @@ Expo/React Native rebuild of the Health Rizz kids' app, ported feature-by-featur
 
 A running log of what each PR added, kept up to date as features land — including bugs found and fixed along the way, since a couple of those were subtle enough to be worth remembering.
 
+### [#6 — Populate Profile tab: islands completed, real account info](https://github.com/rayyan-netizen/Healthrizz_app_V2/pull/6)
+- Header with child nickname + persona badge (`children.primary_persona`, set once at onboarding); "Islands Completed" progress bar + a badge per island, unlocked via the same `child_map_progress` completion check the submap and Recipes tab use; existing account/logout section restyled to match. There's no dedicated "Profile" screen in `HealthRizz-Mobile` — its closest analog is the Progress tab — so this merges that content into the existing tab rather than replacing it.
+- A "Streak Stickers" section (per-habit pips) was included in an earlier revision, then removed on request since the Habits tab already shows the same data.
+- **Supabase check:** confirmed the live `children` table genuinely has `stars_earned`/`current_streak`/`longest_streak`/`avatar_url` columns (schema matches the type this time, unlike `child_map_progress` in #3) — but a full-codebase grep found nothing ever writes to them, so they'd only ever show stale zeros. Left them out; `nickname`/`primary_persona` are real (written at onboarding) and safe to use.
+- Confirmed no false-positive completion path: `completeNode('${topicKey}-game', ...)` only fires if the game was actually passed, and the submap gates Play behind Practice behind Learn.
+- Intentionally left out (needs new infra this app doesn't have): the milestone/badge-earning system and the streak-freeze warning banner from upstream's Progress screen.
+
 ### [#5 — Populate Recipes tab: island + bonus recipes, gated by map completion](https://github.com/rayyan-netizen/Healthrizz_app_V2/pull/5)
 - All 9 island recipes (one per island, e.g. Health Rizz Soda for Splash Springs) + 8 bonus recipes from the Kids Recipe Book, with All/Island/Bonus/Unlocked filter chips. Ported from `HealthRizz-Mobile`'s `RecipeExplorer`/recipe-detail screens.
 - Unlock rule: bonus recipes are always available (no coin economy exists in this app); an island recipe unlocks the moment that island's game node is completed, reusing the same `child_map_progress` completion check the submap screen already uses. Only Splash Springs is playable today, so only Health Rizz Soda can actually unlock — the other 8 stay locked until their islands ship.
