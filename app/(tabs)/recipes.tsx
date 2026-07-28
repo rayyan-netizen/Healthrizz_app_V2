@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useChildStore } from '@stores/childStore';
 import { getAllRecipes, fetchUnlockedRecipeIds, type RecipeRow } from '@core/recipes/api';
@@ -57,41 +58,57 @@ export default function RecipesScreen() {
         </Text>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-      >
-        {FILTERS.map((f) => {
-          const active = filter === f.id;
-          const count =
-            f.id === 'all' ? recipes.length
-            : f.id === 'island' ? recipes.filter((r) => !r.isBonus).length
-            : f.id === 'bonus' ? recipes.filter((r) => r.isBonus).length
-            : unlocked.size;
-          return (
-            <Pressable
-              key={f.id}
-              onPress={() => {
-                hapticLight();
-                setFilter(f.id);
-              }}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              style={[styles.filterChip, active && styles.filterChipActive]}
-            >
-              <Text style={[styles.filterText, active && styles.filterTextActive]} numberOfLines={1}>
-                {f.emoji} {f.label}
-              </Text>
-              <View style={[styles.filterCountPill, active && styles.filterCountPillActive]}>
-                <Text style={[styles.filterCountText, active && styles.filterCountTextActive]}>
-                  {count}
+      <View style={styles.filterRowWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {FILTERS.map((f) => {
+            const active = filter === f.id;
+            const count =
+              f.id === 'all' ? recipes.length
+              : f.id === 'island' ? recipes.filter((r) => !r.isBonus).length
+              : f.id === 'bonus' ? recipes.filter((r) => r.isBonus).length
+              : unlocked.size;
+            return (
+              <Pressable
+                key={f.id}
+                onPress={() => {
+                  hapticLight();
+                  setFilter(f.id);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                style={[styles.filterChip, active && styles.filterChipActive]}
+              >
+                <Text style={[styles.filterText, active && styles.filterTextActive]} numberOfLines={1}>
+                  {f.emoji} {f.label}
                 </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                <View style={[styles.filterCountPill, active && styles.filterCountPillActive]}>
+                  <Text style={[styles.filterCountText, active && styles.filterCountTextActive]}>
+                    {count}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+        <LinearGradient
+          pointerEvents="none"
+          colors={[BG.warm, 'rgba(255,251,240,0)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.filterRowFadeLeft}
+        />
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(255,251,240,0)', BG.warm]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.filterRowFadeRight}
+        />
+      </View>
 
       <ScrollView
         contentContainerStyle={{ padding: SPACING.LG, paddingTop: SPACING.SM, paddingBottom: SPACING.XXL }}
@@ -166,12 +183,15 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: SPACING.LG, paddingTop: SPACING.MD },
   title: { fontFamily: FONT.brand, fontSize: 28, color: TEXT.DEFAULT },
   subtitle: { fontFamily: FONT.body, color: TEXT.tertiary, fontSize: 14, marginTop: 2 },
+  filterRowWrapper: { position: 'relative' },
   filterRow: {
     paddingHorizontal: SPACING.LG,
     paddingTop: SPACING.SM,
     paddingBottom: SPACING.SM,
     gap: SPACING.XS,
   },
+  filterRowFadeLeft: { position: 'absolute', top: 0, left: 0, bottom: 0, width: SPACING.LG },
+  filterRowFadeRight: { position: 'absolute', top: 0, right: 0, bottom: 0, width: SPACING.LG },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
