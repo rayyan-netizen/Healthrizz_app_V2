@@ -2,6 +2,27 @@
 
 Expo/React Native rebuild of the Health Rizz kids' app, ported feature-by-feature from `HealthRizz-Mobile` and wired to the same Supabase backend as the web app. See [CLAUDE.md](CLAUDE.md) for how to run it.
 
+## Known dev-environment gotcha: "Unable to resolve data for blob"
+
+If every Supabase call suddenly starts failing — habit toggles do nothing, screens load with everything blank/zeroed, Metro logs show a wall of `WARN ... Error: Unable to resolve data for blob: <uuid>` — this is **not an app bug**. It's RN 0.81's new-architecture `Blob` registry (used internally by `fetch`/`XMLHttpRequest`) getting corrupted in the running dev-client process.
+
+**Trigger:** a Fast Refresh that lands while a component is mid-crash or a network request is in flight — e.g. editing a file and leaving behind a stale reference (a `ReferenceError` in the Metro log right before the blob spam starts is the tell). Once it happens, no in-app reload fixes it — every `fetch` from that process is broken until the whole app process dies.
+
+**Fix** — a real process restart, not just Cmd+R:
+```bash
+# 1. Kill Metro
+ps aux | grep "expo start" | grep -v grep   # find the PID
+kill <pid>
+
+# 2. Restart with a cleared cache
+npx expo start --dev-client --clear
+
+# 3. Fully terminate + relaunch the app (not a JS-only reload)
+xcrun simctl terminate booted org.healthrizz.app
+xcrun simctl launch booted org.healthrizz.app
+```
+Confirm it's fixed by checking Metro's log has no more blob warnings after the relaunch, then re-test the screen that was broken.
+
 ## What's shipped
 
 A running log of what each PR added, kept up to date as features land — including bugs found and fixed along the way, since a couple of those were subtle enough to be worth remembering.
