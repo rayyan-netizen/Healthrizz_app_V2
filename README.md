@@ -6,6 +6,12 @@ Expo/React Native rebuild of the Health Rizz kids' app, ported feature-by-featur
 
 A running log of what each PR added, kept up to date as features land — including bugs found and fixed along the way, since a couple of those were subtle enough to be worth remembering.
 
+### [#5 — Populate Recipes tab: island + bonus recipes, gated by map completion](https://github.com/rayyan-netizen/Healthrizz_app_V2/pull/5)
+- All 9 island recipes (one per island, e.g. Health Rizz Soda for Splash Springs) + 8 bonus recipes from the Kids Recipe Book, with All/Island/Bonus/Unlocked filter chips. Ported from `HealthRizz-Mobile`'s `RecipeExplorer`/recipe-detail screens.
+- Unlock rule: bonus recipes are always available (no coin economy exists in this app); an island recipe unlocks the moment that island's game node is completed, reusing the same `child_map_progress` completion check the submap screen already uses. Only Splash Springs is playable today, so only Health Rizz Soda can actually unlock — the other 8 stay locked until their islands ship.
+- Intentionally dropped from the upstream version: bundled recipe artwork (source SVGs are multi-MB raster exports, not worth bundling yet — cards use an emoji hero instead) and the coin-purchase unlock flow (this app has no spendable currency wired up).
+- **Bug found and fixed:** the horizontal filter-chip row clipped the last chip flush at the screen edge with no visual cue it scrolled, making counts/labels look cut off. Ported the fade-edge `LinearGradient` fix already validated on `HealthRizz-Mobile`'s `feat/onboarding-quiz-habit-scoring` branch instead of re-solving it from scratch.
+
 ### [#4 — Add habit tracking: daily toggles, streaks, and history calendar](https://github.com/rayyan-netizen/Healthrizz_app_V2/pull/4)
 - Hydro/Phyto/Pro Rizzler daily-toggle cards on the Habits tab, backed by `habit_tracking` in Supabase (upsert on `child_id, habit_type, tracked_date`).
 - Streak pips (fill up to 5, cap there) and a "⭐ My Goal" badge pulled from the child's `active_goals` chosen during onboarding.
