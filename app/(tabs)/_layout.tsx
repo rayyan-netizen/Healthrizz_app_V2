@@ -1,6 +1,7 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { Text } from 'react-native';
+import { useAuthStore } from '@stores/authStore';
 import { SECONDARY, TEXT, TYPOGRAPHY } from '@lib/theme';
 
 function tabIcon(emoji: string) {
@@ -10,6 +11,16 @@ function tabIcon(emoji: string) {
 }
 
 export default function TabsLayout() {
+  const session = useAuthStore((s) => s.session);
+  const initializing = useAuthStore((s) => s.initializing);
+
+  // Same session-based redirect app/index.tsx and login.tsx already use —
+  // without this, signing out from the Profile tab clears the session but
+  // leaves the tab navigator showing the same screen with nothing to load.
+  if (!initializing && !session) {
+    return <Redirect href="/login" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
