@@ -23,9 +23,28 @@ xcrun simctl launch booted org.healthrizz.app
 ```
 Confirm it's fixed by checking Metro's log has no more blob warnings after the relaunch, then re-test the screen that was broken.
 
+## Supabase tables
+
+Every table this app actually reads or writes, kept in sync with the code (not the webapp's migration files, which have been found to describe columns that don't really exist — see the `child_map_progress` note below). `auth.users` is Supabase Auth itself, managed via `supabase.auth.*` in `stores/authStore.ts` — not a custom table, but the actual source of the session/identity everything else hangs off of.
+
+| Table | Columns actually used | Written by | Read by |
+|---|---|---|---|
+| `profiles` | `id`, `email` | `ensureProfile()` in `stores/authStore.ts` — upserted on every `SIGNED_IN` event, since no DB trigger creates this row automatically | — (not read anywhere yet) |
+| `children` | `id`, `parent_id`, `nickname`, `primary_persona`, `secondary_persona`, `active_goals` | `app/onboarding/persona.tsx` — one row created once, at the end of onboarding | `stores/authStore.ts`'s `syncChildId` (id/parent_id, re-derives `childId` on every sign-in); `core/habits/api.ts`'s `fetchActiveGoals` (active_goals, drives the "My Goal" badge); `core/profile/api.ts`'s `fetchChildSummary` (nickname/primary_persona) |
+| `child_map_progress` | `child_id`, `node_id`, `completed_at`, `stars_earned` | `completeNode()` in `core/map/progress.ts` — called from the lesson/quiz/game completion screens | `fetchNodeCompletion()` — used by the submap screen (node lock state), the Recipes tab (island-recipe unlock), and the Profile tab (Islands Completed badges) |
+| `habit_tracking` | `child_id`, `habit_type`, `tracked_date`, `completed` | `setHabit()` in `core/habits/api.ts` — upserted on every toggle from the Habits tab | `fetchTodayHabits()` / `fetchHabitLogs()`, both in `core/habits/api.ts`, both only consumed by the Habits tab |
+
+**Known schema gaps** (checked against the live REST schema directly, not the webapp's migration files):
+- `child_map_progress`'s migration file describes `xp_earned`/`started_at`/`is_practice`/`practice_count` columns that don't actually exist on the live table (found in #3) — the write payload already excludes them. Its `node_id` also has a real FK to `map_nodes`, which is empty except for two hand-inserted rows for Splash Springs — every other topic's node id never matches a row, so their completion checks always come back empty (i.e. permanently locked, by design until those islands ship).
+- `children` genuinely has `avatar_url`/`stars_earned`/`current_streak`/`longest_streak`/`last_activity_date` columns (schema matches the full `ChildProfile` type this time) — but nothing in the codebase writes to any of them, confirmed by a full-repo grep (found in #6). They'd only ever show stale defaults if read, so nothing reads them.
+- The Recipes tab (`core/recipes/api.ts`) doesn't touch Supabase at all beyond the shared `fetchNodeCompletion` check above — its recipe data is static fixtures, not a DB table.
+
 ## What's shipped
 
 A running log of what each PR added, kept up to date as features land — including bugs found and fixed along the way, since a couple of those were subtle enough to be worth remembering.
+
+### [#7 — Fix: log out now redirects to login instead of leaving user stuck](https://github.com/rayyan-netizen/Healthrizz_app_V2/pull/7)
+- **Bug found and fixed:** `signOut()` correctly cleared the Supabase session, but `app/(tabs)/_layout.tsx` never checked session state the way `app/index.tsx` and `login.tsx` already do — so logging out from Profile just left the same tab screen up with a cleared session underneath. Added the same session-based `Redirect` guard to the tabs layout. Verified live end-to-end: fresh signup → onboarding → log out (immediate redirect to login) → log back in (session + child correctly re-synced, straight to the map).
 
 ### [#6 — Populate Profile tab: islands completed, real account info](https://github.com/rayyan-netizen/Healthrizz_app_V2/pull/6)
 - Header with child nickname + persona badge (`children.primary_persona`, set once at onboarding); "Islands Completed" progress bar + a badge per island, unlocked via the same `child_map_progress` completion check the submap and Recipes tab use; existing account/logout section restyled to match. There's no dedicated "Profile" screen in `HealthRizz-Mobile` — its closest analog is the Progress tab — so this merges that content into the existing tab rather than replacing it.
